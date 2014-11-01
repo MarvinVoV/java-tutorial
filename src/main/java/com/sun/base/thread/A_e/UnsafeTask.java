@@ -15,13 +15,15 @@ public class UnsafeTask implements Runnable {
     @Override
     public void run() {
         startDate = new Date();
-        System.out.printf("Starting Thread_%s : %s\n", Thread.currentThread().getId(), Utils.dateFormat(startDate));
+        System.out.printf("Starting Thread_%s : %s\n", Thread.currentThread().getId(),
+                Utils.dateFormat(startDate));
         try {
             TimeUnit.SECONDS.sleep((int) Math.rint(Math.random() * 10 + 5));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.printf("Thread finished_%s : %s\n", Thread.currentThread().getId(), Utils.dateFormat(startDate));
+        System.out.printf("Thread finished_%s : %s\n", Thread.currentThread().getId(),
+                Utils.dateFormat(startDate));
     }
 
     public static void main(String[] args) {

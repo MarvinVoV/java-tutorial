@@ -15,7 +15,7 @@ public class CheckMails {
 
         String host = "client.deppon.com";
         final String user = "sunyameng@deppon.com";
-        final String password = "sunyameng521";
+        final String password = "";
         String port = "995";
         Properties properties = new Properties();
         properties.put("mail.store.protocol", "pop3");

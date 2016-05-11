@@ -9,7 +9,16 @@ import java.util.HashMap;
  */
 public class VersatileUtils {
 
+    private VersatileUtils(){
+        throw new AssertionError();
+    }
+
     public static <K, V> HashMap<K, V> newHashMap(){
         return new HashMap<K, V>();
+    }
+
+    public static void main(String[] args) {
+        VersatileUtils utils = new VersatileUtils();
+
     }
 }

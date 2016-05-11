@@ -1,4 +1,4 @@
-package sun.instrument.java.mail;
+package sun.instrument.mail;
 
 import javax.mail.*;
 import java.security.Security;

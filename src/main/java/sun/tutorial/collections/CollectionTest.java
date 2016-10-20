@@ -20,32 +20,32 @@ public class CollectionTest {
 
         /*
             Traverse 1
-         */
-        list.stream().filter(e -> e % 2 == 0)
-                .forEach(e -> System.out.println(e.toString()));
-
-        /*
-            Traverse 2
-         */
-        for (Iterator<Integer> iterator = list.iterator(); iterator.hasNext(); ) {
-            if (iterator.hasNext()) {
-                System.out.println(iterator.next());
-            }
-        }
-
-        list.removeAll(Collections.singleton(3));
-        System.out.println(list);
-
-        Integer[] a = list.toArray(new Integer[0]);
-        System.out.println(Arrays.toString(a));
-
-        Integer[] temp = new Integer[10];
-        list.toArray(temp);
-        System.out.println(Arrays.toString(temp));
-
-        list.sort((o1, o2) -> o1 > o2 ? 1 : (Objects.equals(o1, o2) ? 0 : -1));
-
-        System.out.println(list);
+//         */
+//        list.stream().filter(e -> e % 2 == 0)
+//                .forEach(e -> System.out.println(e.toString()));
+//
+//        /*
+//            Traverse 2
+//         */
+//        for (Iterator<Integer> iterator = list.iterator(); iterator.hasNext(); ) {
+//            if (iterator.hasNext()) {
+//                System.out.println(iterator.next());
+//            }
+//        }
+//
+//        list.removeAll(Collections.singleton(3));
+//        System.out.println(list);
+//
+//        Integer[] a = list.toArray(new Integer[0]);
+//        System.out.println(Arrays.toString(a));
+//
+//        Integer[] temp = new Integer[10];
+//        list.toArray(temp);
+//        System.out.println(Arrays.toString(temp));
+//
+//        list.sort((o1, o2) -> o1 > o2 ? 1 : (Objects.equals(o1, o2) ? 0 : -1));
+//
+//        System.out.println(list);
 
     }
 

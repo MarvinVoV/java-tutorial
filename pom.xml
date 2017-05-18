@@ -11,7 +11,7 @@
     <properties>
         <kotlin.version>1.0.3</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jdk.version>1.7</jdk.version>
+        <jdk.version>1.8</jdk.version>
     </properties>
 
     <dependencies>
@@ -96,6 +96,12 @@
             <artifactId>mockito-all</artifactId>
             <version>1.10.19</version>
             <!--<scope>test</scope>-->
+        </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.10</version>
         </dependency>
 
 

@@ -60,4 +60,12 @@ public class Example1 {
         Thread t = new Thread(() -> System.out.println("Hello"));
         t.run();
     }
+
+    @Test
+    public void testFunctionInterface() {
+        Runnable r = () -> System.out.print("run");
+        r.run();
+    }
+
+
 }

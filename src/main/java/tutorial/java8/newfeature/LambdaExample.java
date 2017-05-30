@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
  * @author hufeng
  * @version $Id: Example1, v0.1 2017年05月24日 4:34 PM hufeng Exp $
  */
-public class Example1 {
+public class LambdaExample {
 
     private List<Integer> intList = new ArrayList<>();
 

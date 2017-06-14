@@ -30,7 +30,7 @@ public class ResolveUpgrade {
     private static final Logger log = Logger.getLogger(ResolveUpgrade.class.getName());
 
     public void upgrade() {
-        File file = new File("/Users/hufeng/projects/svnCode/mappprod/branch/ANT01993446_20170527_mappprod/app/biz/service-impl/src/main/resources/META-INF/spring/biz-service-impl.xml");
+        File file = new File("/Users/hufeng/projects/svnCode/mappprod/branch/ANT01993446_20170527_mappprod/app/biz/shared/src/main/resources/META-INF/spring/biz-shared-service.xml");
         process(file);
     }
 
@@ -86,6 +86,7 @@ public class ResolveUpgrade {
                     ((Element) node).setAttribute("interface", interfaceVal);
                 }
             }
+            removeEmptyTextNode(node);
         }
     }
 

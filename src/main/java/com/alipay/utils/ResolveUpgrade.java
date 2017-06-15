@@ -16,7 +16,14 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,14 +37,42 @@ public class ResolveUpgrade {
     private static final Logger log = Logger.getLogger(ResolveUpgrade.class.getName());
 
     public void upgrade() {
-        File file = new File("/Users/hufeng/projects/svnCode/mappprod/branch/ANT01993446_20170527_mappprod/app/biz/shared/src/main/resources/META-INF/spring/biz-shared-service.xml");
-        process(file);
+        File file = new File("/Users/hufeng/projects/svnCode/mappprod/branch/ANT01993446_20170527_mappprod/app");
+
+        try {
+            Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (file.toFile().getName().endsWith("xml") && attrs.isRegularFile()) {
+                        if (!(file.toFile().getParentFile().getName().equalsIgnoreCase("OSGI-INF")
+                                || file.toFile().getParentFile().getName().equalsIgnoreCase("db")
+                                || file.toFile().getParentFile().getName().equalsIgnoreCase("testsuite")
+                                || file.toFile().getParentFile().getName().equalsIgnoreCase("actsSuite")
+                                || file.toFile().getName().equalsIgnoreCase("uri-brokers.xml")
+                                || file.toFile().getName().equalsIgnoreCase("pom.xml")
+                                || file.toFile().getName().contains("sqlmap")
+                                || file.toFile().getName().contains("dao"))) {
+                            try {
+                                process(file.toFile());
+                            } catch (Exception e) {
+                                log.log(Level.SEVERE, "error filename = " + file.getFileName());
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void repairSchema(Document document) {
         NodeList nodeList = document.getElementsByTagName("beans");
         if (nodeList.getLength() != 1) {
             log.log(Level.SEVERE, "Beans node size should be one");
+            throw new RuntimeException("No Beans");
         }
         Node root = nodeList.item(0);
         NamedNodeMap namedNodeMap = root.getAttributes();
@@ -204,7 +239,7 @@ public class ResolveUpgrade {
         NodeList childNodes = node.getChildNodes();
         NodeListIterator nodeListIterator = new NodeListIterator(childNodes);
         while (nodeListIterator.hasNext()) {
-            Node child = (Node)nodeListIterator.next();
+            Node child = (Node) nodeListIterator.next();
             if ("attributes".equalsIgnoreCase(child.getNodeName())) {
                 NamedNodeMap attrs = child.getAttributes();
                 for (int j = 0; j < attrs.getLength(); j++) {
@@ -243,6 +278,43 @@ public class ResolveUpgrade {
         node.getParentNode().removeChild(node);
     }
 
+    /**
+     * Spring 4+ not support local attribute in ref tag.
+     *
+     * @param document document
+     */
+    private void resolveLocalAttr(Document document) {
+        NodeList nodeList = document.getElementsByTagName("bean");
+        if (nodeList.getLength() == 0) {
+            return;
+        }
+        NodeListIterator beansIterator = new NodeListIterator(nodeList);
+        while (beansIterator.hasNext()) {
+            Node beanNode = (Node) beansIterator.next();
+            replaceLocalTag(beanNode);
+        }
+
+    }
+
+    private void replaceLocalTag(Node node) {
+        if (node.hasChildNodes()) {
+            NodeList childNodes = node.getChildNodes();
+            NodeListIterator iterator = new NodeListIterator(childNodes);
+            while (iterator.hasNext()) {
+                Node child = (Node) iterator.next();
+                if ("ref".equalsIgnoreCase(child.getNodeName())) {
+                    Node localAttrNode = getAttributeByName(child, "local");
+                    if (localAttrNode != null) {
+                        String local = localAttrNode.getNodeValue();
+                        ((Element) child).setAttribute("bean", local);
+                        removeAttributeByName(child, "local");
+                    }
+                }
+                replaceLocalTag(child);
+            }
+        }
+    }
+
     private Node getAttributeByName(Node node, String attributeName) {
         if (node == null || StringUtils.isEmpty(attributeName)) {
             return null;
@@ -258,19 +330,6 @@ public class ResolveUpgrade {
         NamedNodeMap nodeAttributes = node.getAttributes();
         return nodeAttributes.removeNamedItem(attributeName);
     }
-
-    private void removeNode(Node node) {
-        Node prev = node.getPreviousSibling();
-        if (prev != null && prev.getNodeType() == Node.TEXT_NODE && prev.getNodeValue().trim().length() == 0) {
-            node.getParentNode().removeChild(prev);
-        }
-        Node next = node.getNextSibling();
-        if (next != null && next.getNodeType() == Node.TEXT_NODE && next.getNodeValue().trim().length() == 0) {
-            node.getParentNode().removeChild(next);
-        }
-        node.getParentNode().removeChild(node);
-    }
-
 
     private void removeEmptyTextNode(Node node) {
         Node child = node.getFirstChild();
@@ -304,14 +363,15 @@ public class ResolveUpgrade {
         repairSchema(doc);
         repairSofaService(doc);
         repairSofaReference(doc);
+        resolveLocalAttr(doc);
 
-//        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-//            writeXml(doc, fileOutputStream);
-//        } catch (Exception e) {
-//            log.log(Level.SEVERE, "write error.");
-//            throw new RuntimeException(e);
-//        }
-        writeXml(doc, System.out);
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+            writeXml(doc, fileOutputStream);
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "write error.");
+            throw new RuntimeException(e);
+        }
+//        writeXml(doc, System.out);
     }
 
     private void writeXml(Document document, OutputStream outputStream) {
@@ -321,7 +381,7 @@ public class ResolveUpgrade {
             Transformer transformer = tFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "yes");
-//            transformer.setOutputProperty(OutputKeys.ENCODING, "GBK");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "GBK");
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
             transformer.setOutputProperty(S_KEY_INDENT_AMOUNT, "4");
             DOMSource source = new DOMSource(document);

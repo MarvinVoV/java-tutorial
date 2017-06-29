@@ -5,7 +5,6 @@
 package com.alipay.utils;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -32,16 +31,22 @@ public class RuleFixUtil {
     private static void fixIfWithoutBraceRule(File file, String encoding) throws Exception {
         LOGGER.log(Level.INFO, "----Start process file: " + file.getAbsolutePath());
         List<String> lines = FileUtils.readLines(file, encoding);
-        System.out.println(lines.size());
+        String lineSeparator = retrieveLineSeparator(file);
         List<String> fixLines = new ArrayList<>();
 
         Pattern pattern = Pattern.compile("^(\\s*)if\\s*\\(.+$");
         for (int i = 0; i < lines.size(); i++) {
-            if (i == 99) {
-                System.out.println(i);
-            }
-            if (lines.get(i).matches("(\\s*)if\\s*\\(.+\\s*\\{$")) {
+            String line = lines.get(i);
+            line = removeComments(line);
+            if (line.matches("(\\s*)if\\s*\\(.+\\s*\\{\\s*$")) {
                 fixLines.add(lines.get(i));
+                continue;
+            }
+            Pattern linePattern = Pattern.compile("^(\\s*)if\\s*\\(.*\\).*;");
+            Matcher lineMatcher = linePattern.matcher(line);
+            if (lineMatcher.find()) {
+                String space = lineMatcher.group(1);
+                resolveOneLineExpression(line, space, fixLines);
                 continue;
             }
             Matcher matcher = pattern.matcher(lines.get(i));
@@ -56,10 +61,11 @@ public class RuleFixUtil {
                         i += scope;
                     }
                 } else {
-                    String fixSentence = lines.get(i) + " {";
+                    String fixSentence = removeComments(lines.get(i)) + " {";
                     fixLines.add(fixSentence);
                     fixLines.add(lines.get(++i));
                     String endSentence = lines.get(i + 1);
+                    endSentence = removeComments(endSentence);
                     if (endSentence.matches("^\\s+else\\s*$")) {
                         i++;
                         fixLines.add(space + "} else {");
@@ -77,8 +83,10 @@ public class RuleFixUtil {
             }
         }
 
-        String content = StringUtils.join(fixLines, "\n");
-        content += "\n";
+        String content = StringUtils.join(fixLines, lineSeparator);
+        if (lastLineIsCRorLF(file)) {
+            content += lineSeparator;
+        }
         FileUtils.write(file, content, encoding);
     }
 
@@ -98,8 +106,33 @@ public class RuleFixUtil {
         }
     }
 
+    private static void resolveOneLineExpression(String line, String space, List<String> target) {
+        Stack<Character> stack = new Stack<>();
+        String expr = removeComments(line);
+        boolean flag = false;
+        int index = 0;
+        for (char c : line.toCharArray()) {
+            ++index;
+            if (c == '(') {
+                if (!flag) {
+                    flag = true;
+                }
+                stack.push(c);
+            } else if (c == ')') {
+                stack.pop();
+            }
+            if (flag && stack.isEmpty()) {
+                break;
+            }
+        }
+        target.add(expr.substring(0, index) + " {");
+        target.add(space + "\t" + expr.substring(index));
+        target.add(space + "}");
+    }
+
     private static int indexOfSeparateIfSentence(List<String> lines, String beforeFragment, int cursor) {
         String currentLine = lines.get(cursor);
+        currentLine = removeComments(currentLine);
         if (currentLine.matches("^.*\\s*\\{\\s*$")) {
             return -1;
         }
@@ -124,9 +157,61 @@ public class RuleFixUtil {
         return stack.isEmpty();
     }
 
+    private static String retrieveLineSeparator(File file) throws IOException {
+        char current;
+        String lineSeparator = "";
+        try (FileInputStream fis = new FileInputStream(file)) {
+            while (fis.available() > 0) {
+                current = (char) fis.read();
+                if ((current == '\n') || (current == '\r')) {
+                    lineSeparator += current;
+                    if (fis.available() > 0) {
+                        char next = (char) fis.read();
+                        if ((next != current)
+                                && ((next == '\r') || (next == '\n'))) {
+                            lineSeparator += next;
+                        }
+                    }
+                    return lineSeparator;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String removeComments(String line) {
+        int index = line.indexOf("//");
+        if (index != -1) {
+            return line.substring(0, index);
+        }
+        return line;
+    }
+
+    private static boolean lastLineIsCRorLF(File file) {
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(file, "r");
+            long pos = raf.length() - 1;
+            if (pos < 0) {
+                return false;
+            }
+            raf.seek(pos);
+            int c = raf.read();
+            return c == '\n' || c == '\r';
+        } catch (IOException e) {
+            return false;
+        } finally {
+            if (raf != null) try {
+                raf.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-//        File file = new File("/Users/hufeng/projects/svnCode/mappprod/trunk/app/biz/data/src/main/java/com/alipay/mappprod/biz/data/datahandler/DataCardHandler.java");
-        File file = new File("/Users/hufeng/projects/svnCode/mappprod/trunk/app/biz/promo/src/main/java/com/alipay/mappprod/biz/promo/service/impl/ItemActivityPostManagerImpl.java");
+        // /Users/hufeng/projects/svnCode/mappprod/trunk/app/biz/data/src/main/java/com/alipay/mappprod/biz/data/processor/CarnivalRealTimeDataProcessor.java
+//        File file = new File("/Users/hufeng/projects/svnCode/mappprod/trunk/app/biz/data");
+        File file = new File("/Users/hufeng/projects/svnCode/mappprod/trunk/app/biz/trade");
         try {
             Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
                 @Override

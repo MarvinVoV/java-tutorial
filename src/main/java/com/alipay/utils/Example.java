@@ -4,6 +4,8 @@
  */
 package com.alipay.utils;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author hufeng
  * @version $Id: Example, v0.1 2017年06月28日 2:24 PM hufeng Exp $
@@ -40,6 +42,11 @@ public class Example {
                 "c".equalsIgnoreCase(a) &&
                 "d".equalsIgnoreCase(b)) {
             System.out.println("ccc");
+        }
+
+        // ==== case 4
+        if (a != null && StringUtils.isNotEmpty(a)) { // 商品处于活动状态
+            String campId = "a";
         }
 
     }

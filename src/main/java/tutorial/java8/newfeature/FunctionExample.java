@@ -4,6 +4,8 @@
  */
 package tutorial.java8.newfeature;
 
+import tutorial.java8.newfeature.model.Apple;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +27,11 @@ public class FunctionExample {
 
     public static void main(String[] args) {
 
-        List<Integer> list = map(Arrays.asList("lambda", "hello"), (String s) -> s.length());
+        List<Integer> list = map(Arrays.asList("lambda", "hello"), String::length);
         System.out.println(Arrays.toString(list.toArray()));
+
+
+        Function<Integer, Apple> f = Apple::new;
+        System.out.println(f.apply(3).getWeight());
     }
 }

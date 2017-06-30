@@ -21,7 +21,7 @@ public class AroundPattern {
     }
 
     public static void main(String[] args) throws IOException{
-        String oneLine = processFile((BufferedReader br) -> br.readLine());
+        String oneLine = processFile(BufferedReader::readLine);
         String twoLine = processFile((BufferedReader br) -> br.readLine() + br.readLine());
 
         System.out.println(oneLine);

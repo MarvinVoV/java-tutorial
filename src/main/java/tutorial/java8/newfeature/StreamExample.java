@@ -8,11 +8,9 @@ import org.junit.Before;
 import org.junit.Test;
 import tutorial.java8.newfeature.model.Dish;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertTrue;
 
@@ -133,6 +131,37 @@ public class StreamExample {
                 .collect(Collectors.toList());
         assertTrue(pairs.size() > 0);
     }
+
+    @Test
+    public void testReduce() {
+        List<Integer> numbers = Arrays.asList(1, 3, 5);
+        int sum = numbers.stream().reduce(0, (a, b) -> a + b);
+        assertTrue(sum == 9);
+
+        Optional<Integer> max = numbers.stream().reduce(Integer::max);
+        assertTrue(max.isPresent() && max.get() == 5);
+
+
+        int count = numbers.stream().map(d -> 1).reduce(0, Integer::sum);
+        assertTrue(count == 3);
+
+    }
+
+
+    @Test
+    public void testStreamFromValues() {
+        Stream<String> stream = Stream.of("java8", "lambda", "action");
+        stream.map(String::toUpperCase).forEach(System.out::println);
+    }
+
+    @Test
+    public void testStreamFromArrays() {
+        int[] numbers = {2, 3, 4, 5, 6};
+        int sum = Arrays.stream(numbers).sum();
+        assertTrue(sum == 20);
+    }
+
+
 
 
 }

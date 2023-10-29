@@ -1,7 +1,6 @@
-#Java Tutorial
+# Java Tutorial
 
-new feature
+## New Features
 
-
-hot fix
+[JDK Release Notes](https://www.oracle.com/java/technologies/javase/jdk-relnotes-index.html)
 
